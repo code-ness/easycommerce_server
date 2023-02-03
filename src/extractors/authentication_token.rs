@@ -8,6 +8,8 @@ use jsonwebtoken::{
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
 
+use crate::AppState;
+
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
     pub id: usize,
@@ -45,8 +47,7 @@ impl FromRequest for AuthenticationToken {
             )));
         }
 
-        let secret: &str = &req.app_data::<web::Data<String>>().unwrap();
-        // let secret: &str = "secret";
+        let secret: &str = &&req.app_data::<web::Data<AppState>>().unwrap().secret;
 
         let token_result: Result<TokenData<Claims>, JwtError> = decode::<Claims>(
             &authentication_token,
