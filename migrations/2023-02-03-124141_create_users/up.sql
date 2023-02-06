@@ -1,0 +1,7 @@
+CREATE TABLE users (
+  id VARCHAR PRIMARY KEY,
+  role_id VARCHAR NOT NULL,
+  email VARCHAR NOT NULL,
+  password VARCHAR NOT NULL,
+  FOREIGN KEY (role_id) REFERENCES roles (id)
+)
