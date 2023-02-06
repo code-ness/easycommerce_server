@@ -16,9 +16,15 @@ pub struct Claims {
     pub exp: usize,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+struct EncodeBody {
+    email: String,
+    password: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthenticationToken {
-    id: usize,
+    pub id: usize,
 }
 
 impl FromRequest for AuthenticationToken {
@@ -27,7 +33,6 @@ impl FromRequest for AuthenticationToken {
 
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         let req = req.clone();
-
         let authorization_header_option: Option<&HeaderValue> =
             req.headers().get(actix_web::http::header::AUTHORIZATION);
 
