@@ -1,0 +1,5 @@
+CREATE TABLE stores (
+  id VARCHAR PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  stage VARCHAR NOT NULL
+)
