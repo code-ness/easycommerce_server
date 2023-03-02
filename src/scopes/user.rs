@@ -125,9 +125,25 @@ async fn sign_in(
     .await?
     .map_err(actix_web::error::ErrorInternalServerError)?;
 
+    let pool_clone = state.pool.clone();
+    let users = web::block(move || {
+        let mut conn = pool_clone.get()?;
+        validate_user(&body.email, &body.password, &mut conn)
+    })
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
+
+    let token_clone = token.clone();
     web::block(move || {
         let mut conn = state.pool.get()?;
-        validate_user(&body.email, &body.password, &mut conn)
+
+        add_to_session(
+            &mut conn,
+            &id.to_string(),
+            &users[0].id,
+            &users[0].role_id,
+            &token_clone,
+        )
     })
     .await?
     .map_err(actix_web::error::ErrorInternalServerError)?;
