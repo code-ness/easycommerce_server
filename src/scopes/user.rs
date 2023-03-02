@@ -1,7 +1,6 @@
 use crate::{
     extractors::authentication_token::{AuthenticationToken, Claims},
     models::{NewSession, NewUser, Role, Session, User},
-    schema::session,
     AppState,
 };
 use actix_web::{web, Error, HttpResponse, Scope};
@@ -57,7 +56,7 @@ async fn sign_up(
     )
     .unwrap();
 
-    let mut pool_clone = state.pool.clone();
+    let pool_clone = state.pool.clone();
     let body_clone = body.clone();
     web::block(move || {
         let mut conn = pool_clone.get()?;
@@ -66,7 +65,7 @@ async fn sign_up(
     .await?
     .map_err(actix_web::error::ErrorInternalServerError)?;
 
-    pool_clone = state.pool.clone();
+    let pool_clone = state.pool.clone();
     let role = web::block(move || {
         let mut conn = pool_clone.get()?;
         get_admin(&mut conn)
@@ -76,7 +75,7 @@ async fn sign_up(
 
     let mut role_id = role[0].id.clone();
 
-    pool_clone = state.pool.clone();
+    let pool_clone = state.pool.clone();
     let user = web::block(move || {
         let mut conn = pool_clone.get()?;
         // let hashed_password: String = hash_password(&body.password)?;

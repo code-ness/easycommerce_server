@@ -1,3 +1,4 @@
+use crate::scopes::{store::store_scope, user::user_scope};
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 use diesel::pg::PgConnection;
@@ -44,7 +45,8 @@ async fn main() -> Result<()> {
                 pool: pool.clone(),
             }))
             .wrap(middleware::Logger::default())
-            .service(scopes::user::user_scope())
+            .service(user_scope())
+            .service(store_scope())
     })
     .bind(("127.0.0.1", 4000))?
     .run()
