@@ -3,7 +3,9 @@ use actix_web::{
     FromRequest, HttpRequest,
 };
 use jsonwebtoken::{
-    decode, errors::Error as JwtError, Algorithm, DecodingKey, TokenData, Validation,
+    decode,
+    errors::{Error as JwtError, ErrorKind},
+    Algorithm, DecodingKey, TokenData, Validation,
 };
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
@@ -64,7 +66,10 @@ impl FromRequest for AuthenticationToken {
             Ok(token) => ready(Ok(AuthenticationToken {
                 id: token.claims.id,
             })),
-            Err(_e) => ready(Err(ErrorUnauthorized("Invalid authentication token sent!"))),
+            Err(err) => match err.kind() {
+                ErrorKind::ExpiredSignature => ready(Err(ErrorUnauthorized("Expired token sent!"))),
+                _ => ready(Err(ErrorUnauthorized("Invalid authentication token sent!"))),
+            },
         }
     }
 }
