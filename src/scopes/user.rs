@@ -47,7 +47,7 @@ async fn sign_up(
 ) -> Result<HttpResponse, Error> {
     let mut rng = rand::thread_rng();
     let id: usize = rng.gen();
-    let exp: usize = (Utc::now() + Duration::hours(1)).timestamp() as usize;
+    let exp: usize = (Utc::now() + Duration::hours(24)).timestamp() as usize;
     let claims: Claims = Claims { id, exp };
     let token: String = encode(
         &Header::default(),
@@ -107,7 +107,7 @@ async fn sign_in(
 ) -> Result<HttpResponse, Error> {
     let mut rng = rand::thread_rng();
     let id: usize = rng.gen();
-    let exp: usize = (Utc::now() + Duration::hours(1)).timestamp() as usize;
+    let exp: usize = (Utc::now() + Duration::hours(24)).timestamp() as usize;
     let claims: Claims = Claims { id, exp };
     let token: String = encode(
         &Header::default(),
@@ -247,12 +247,17 @@ fn add_to_session(
 ) -> Result<Session, DbError> {
     use crate::schema::session::dsl::*;
 
+    diesel::delete(session.filter(user_id.eq(user)))
+        .filter(expires_at.lt(chrono::Local::now().naive_local()))
+        .execute(conn)
+        .expect("Error deleting old sessions");
+
     let new_session = NewSession {
         id: claim_id,
         user_id: user,
         role_id: role,
         access_token: token,
-        expires_at: chrono::Local::now().naive_local(),
+        expires_at: chrono::Local::now().naive_local() + Duration::days(1),
     };
 
     let res = diesel::insert_into(session)
@@ -269,8 +274,7 @@ fn validate_user(
     use crate::schema::users::dsl::*;
 
     let user = users.filter(email.eq(user_email)).load::<User>(conn)?;
-    println!("{}", user.is_empty());
-    println!("{}", user[0].password);
+
     if !user.is_empty() && user_password == user[0].password {
         Ok(user)
     } else {
