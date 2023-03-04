@@ -31,7 +31,6 @@ async fn get_stores(
     auth_token: AuthenticationToken,
     state: web::Data<AppState>,
 ) -> Result<HttpResponse, Error> {
-    println!("{:?}", auth_token.id);
     let pool = state.pool.clone();
     let sessions = web::block(move || {
         let mut conn = pool.get()?;
@@ -146,6 +145,11 @@ fn get_session(user_session_id: &str, conn: &mut PgConnection) -> Result<Vec<Ses
     let sessions = session
         .filter(id.eq(user_session_id))
         .load::<Session>(conn)?;
+
+    if sessions[0].expires_at < chrono::Local::now().naive_local() {
+        diesel::delete(session.find(&sessions[0].id)).get_result::<Session>(conn)?;
+        return Err("User session expired".into());
+    }
 
     if sessions.is_empty() {
         Err("User session not found".into())
